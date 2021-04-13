@@ -75,7 +75,7 @@ theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
-deploy:
+deploy: 
   type: git
   repository: https://repo_token@github.com/ChiRenhua/chirenhua.github.io.git
   branch: master
