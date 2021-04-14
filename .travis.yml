@@ -8,12 +8,13 @@ branches:
     - hexo 
 
 before_install:
-  - npm install -g hexo-cli
+  - npm i hexo-cli -g
 
 # S: Build Lifecycle
 install:
-  - npm install
-  - npm install hexo-deployer-git --save
+  - npm i
+  - npm i hexo-deployer-git --save
+  - npm i Mime --save
 
 before_script:
  # - npm install -g gulp
