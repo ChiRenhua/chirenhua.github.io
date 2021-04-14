@@ -3,10 +3,6 @@ sudo: required
 node_js: 
   - 15.14.0
 
-cache:
-  directories:
-    - node_modules
-
 branches:
   only:
     - hexo 
