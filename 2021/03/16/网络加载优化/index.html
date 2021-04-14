@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"chirenhua.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="网络请求优化网络请求优化可以从以下几个纬度进行思考  减少网络请求耗时 提高资源请求效率 减轻服务端压力  CDN使用 CDN 可以有效提升请求效率，减轻源服务器压力，但是要注意只有静态资源才适合使用 CDN，比如图片、HTML 文件、模版等不经常改变的数据。 原理CDN 的原理就是在各个位置部署 CDN 服务器，用户在发起请求时，直接请求距离最近的 CDN 服务器，可以避免因为地理位置太远导致的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络请求优化">
+<meta property="og:url" content="https://chirenhua.github.io/2021/03/16/%E7%BD%91%E7%BB%9C%E5%8A%A0%E8%BD%BD%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:site_name" content="Renhua&#39;s Blog">
+<meta property="og:description" content="网络请求优化网络请求优化可以从以下几个纬度进行思考  减少网络请求耗时 提高资源请求效率 减轻服务端压力  CDN使用 CDN 可以有效提升请求效率，减轻源服务器压力，但是要注意只有静态资源才适合使用 CDN，比如图片、HTML 文件、模版等不经常改变的数据。 原理CDN 的原理就是在各个位置部署 CDN 服务器，用户在发起请求时，直接请求距离最近的 CDN 服务器，可以避免因为地理位置太远导致的">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-16T00:12:34.000Z">
+<meta property="article:modified_time" content="2021-04-14T17:47:08.884Z">
+<meta property="article:author" content="Renhua Chi">
+<meta property="article:tag" content="优化">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://chirenhua.github.io/2021/03/16/%E7%BD%91%E7%BB%9C%E5%8A%A0%E8%BD%BD%E4%BC%98%E5%8C%96/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>网络请求优化 | Renhua's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Renhua's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Stay Hungry. Stay Foolish</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://chirenhua.github.io/2021/03/16/%E7%BD%91%E7%BB%9C%E5%8A%A0%E8%BD%BD%E4%BC%98%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/ChiRenhua/Resource/master/WebImage/avatar.jpg">
+      <meta itemprop="name" content="Renhua Chi">
+      <meta itemprop="description" content="求知若渴，虚心若愚">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Renhua's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络请求优化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-03-16 00:12:34" itemprop="dateCreated datePublished" datetime="2021-03-16T00:12:34+00:00">2021-03-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-14 17:47:08" itemprop="dateModified" datetime="2021-04-14T17:47:08+00:00">2021-04-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" itemprop="url" rel="index"><span itemprop="name">性能优化</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="网络请求优化"><a href="#网络请求优化" class="headerlink" title="网络请求优化"></a>网络请求优化</h1><p>网络请求优化可以从以下几个纬度进行思考</p>
+<ol>
+<li>减少网络请求耗时</li>
+<li>提高资源请求效率</li>
+<li>减轻服务端压力</li>
+</ol>
+<h2 id="CDN"><a href="#CDN" class="headerlink" title="CDN"></a>CDN</h2><p>使用 CDN 可以有效提升请求效率，减轻源服务器压力，但是要注意只有静态资源才适合使用 CDN，比如图片、HTML 文件、模版等不经常改变的数据。</p>
+<h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>CDN 的原理就是在各个位置部署 CDN 服务器，用户在发起请求时，直接请求距离最近的 CDN 服务器，可以避免因为地理位置太远导致的耗时高。用户请求 CDN 服务器时，CDN 服务器会优先去缓存中寻找目标数据。</p>
+<p>如果有则命中缓存，直接返回。命中缓存可以有效提升访问速度。</p>
+<p>如果没有命中缓存或者缓存已经过期，CDN 服务器会去源服务器请求数据并返回给客户端，同时将数据缓存。</p>
+<h3 id="预热"><a href="#预热" class="headerlink" title="预热"></a>预热</h3><p>预热就是提前让 CDN 去源服务器请求数据并缓存，保证用户在首次访问到 CDN 服务器时能够直接命中缓存，而不需要请求源服务器。<br>比如在上线新活动之前，可以提前预热 CDN，不仅能加快首批用户的请求时间，还可以减轻源服务器的压力</p>
+<h3 id="刷新"><a href="#刷新" class="headerlink" title="刷新"></a>刷新</h3><p>刷新分为 URL 刷新和目录刷新</p>
+<ul>
+<li><p>URL 刷新是直接将 CDN 节点上的缓存文件直接删除。重新请求最新的资源</p>
+</li>
+<li><p>目录刷新是将 CDN 节点上的文件标记为过期，但是会和源站对比过期时间，只有真正过期的数据才会重新请求。</p>
+</li>
+</ul>
+<h2 id="本地-DNS-映射"><a href="#本地-DNS-映射" class="headerlink" title="本地 DNS 映射"></a>本地 DNS 映射</h2><p>网络请求的第一步基本都是 DNS 解析，而 DNS 解析的耗时跟当时所处的网络环境有很大关系，虽然 DNS 解析是有 cache 的，但是因为 cache 有过期时间，所以不能保证每次请求都能命中 cache。如果可以节省掉这部分时间对网络性能是有一定提升的。</p>
+<p>DNS 解析说简单点无非就是输入域名，输出 IP 地址，那么 DNS 映射就是模拟了这一个行为，在客户端本地维护一个映射表，避免发起 DNS 解析。</p>
+<p>但是简单的映射不能 cover 住所有场景，还需要以下能力进行兜底</p>
+<ol>
+<li> 映射表需要有版本概念，定期从服务器更新最新版本的映射表</li>
+<li>可以强制推送新的映射表给客户端，避免本地长时间使用错误的映射表</li>
+<li>映射的 IP 无法使用时可以回滚使用默认的 DNS 解析服务</li>
+</ol>
+<h2 id="链接复用"><a href="#链接复用" class="headerlink" title="链接复用"></a>链接复用</h2><p>HTTP 请求支持复用，在 header 里设置 Keep-Alive 参数，用于告知服务器保存这个链接，后面还会继续使用。</p>
+<p>一次请求的过程大概可以分为 DNS 解析 -&gt; TCP -&gt; SSL 三个步骤，如果多个请求的域名是相同的，可以复用同一个链接，节省频繁建立链接带来的开销。</p>
+<h2 id="预链接"><a href="#预链接" class="headerlink" title="预链接"></a>预链接</h2><p>预链接是在链接复用的基础上的优化，在 APP 启动后，提前为后续重要的请求建立好 HTTP 链接，等真正发起请求时就可以复用这个链接，减少请求耗时。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%BC%98%E5%8C%96/" rel="tag"># 优化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/09/27/Git-LFS/" rel="prev" title="Git-LFS">
+      <i class="fa fa-chevron-left"></i> Git-LFS
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E4%BC%98%E5%8C%96"><span class="nav-number">1.</span> <span class="nav-text">网络请求优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CDN"><span class="nav-number">1.1.</span> <span class="nav-text">CDN</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">1.1.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%84%E7%83%AD"><span class="nav-number">1.1.2.</span> <span class="nav-text">预热</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%B7%E6%96%B0"><span class="nav-number">1.1.3.</span> <span class="nav-text">刷新</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0-DNS-%E6%98%A0%E5%B0%84"><span class="nav-number">1.2.</span> <span class="nav-text">本地 DNS 映射</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5%E5%A4%8D%E7%94%A8"><span class="nav-number">1.3.</span> <span class="nav-text">链接复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E9%93%BE%E6%8E%A5"><span class="nav-number">1.4.</span> <span class="nav-text">预链接</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Renhua Chi"
+      src="https://raw.githubusercontent.com/ChiRenhua/Resource/master/WebImage/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Renhua Chi</p>
+  <div class="site-description" itemprop="description">求知若渴，虚心若愚</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ChiRenhua" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ChiRenhua" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/crh944015688@163.com" title="E-Mail → crh944015688@163.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Renhua Chi</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '17815167175c0f1b9432',
+      clientSecret: '0631cc8f27051d93cd0dde7da18062d403e0a689',
+      repo        : 'chirenhua.github.io',
+      owner       : 'ChiRenhua',
+      admin       : ['ChiRenhua'],
+      id          : '4658c2690668f5b6781981ab7a0429d6',
+        language: '',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

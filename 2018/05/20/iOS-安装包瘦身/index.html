@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"chirenhua.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="随着 APP 版本的迭代，安装包无法避免的会变的越来越大。分析安装包的构成可以发现，安装包主要是由资源文件和代码构成的，所以从这两个点出手优化可以达到一个很明显的效果。同时编译选项的配置也会对安装包的大小有一定影响。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS-安装包瘦身">
+<meta property="og:url" content="https://chirenhua.github.io/2018/05/20/iOS-%E5%AE%89%E8%A3%85%E5%8C%85%E7%98%A6%E8%BA%AB/index.html">
+<meta property="og:site_name" content="Renhua&#39;s Blog">
+<meta property="og:description" content="随着 APP 版本的迭代，安装包无法避免的会变的越来越大。分析安装包的构成可以发现，安装包主要是由资源文件和代码构成的，所以从这两个点出手优化可以达到一个很明显的效果。同时编译选项的配置也会对安装包的大小有一定影响。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/huanxsd/LinkMap/master/ScreenShot2.png">
+<meta property="article:published_time" content="2018-05-20T20:34:41.000Z">
+<meta property="article:modified_time" content="2021-04-14T17:47:08.884Z">
+<meta property="article:author" content="Renhua Chi">
+<meta property="article:tag" content="iOS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/huanxsd/LinkMap/master/ScreenShot2.png">
+
+<link rel="canonical" href="https://chirenhua.github.io/2018/05/20/iOS-%E5%AE%89%E8%A3%85%E5%8C%85%E7%98%A6%E8%BA%AB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>iOS-安装包瘦身 | Renhua's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Renhua's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Stay Hungry. Stay Foolish</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://chirenhua.github.io/2018/05/20/iOS-%E5%AE%89%E8%A3%85%E5%8C%85%E7%98%A6%E8%BA%AB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/ChiRenhua/Resource/master/WebImage/avatar.jpg">
+      <meta itemprop="name" content="Renhua Chi">
+      <meta itemprop="description" content="求知若渴，虚心若愚">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Renhua's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          iOS-安装包瘦身
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-20 20:34:41" itemprop="dateCreated datePublished" datetime="2018-05-20T20:34:41+00:00">2018-05-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-14 17:47:08" itemprop="dateModified" datetime="2021-04-14T17:47:08+00:00">2021-04-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS-%E5%BC%80%E5%8F%91%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">iOS 开发总结</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>随着 APP 版本的迭代，安装包无法避免的会变的越来越大。分析安装包的构成可以发现，安装包主要是由资源文件和代码构成的，所以从这两个点出手优化可以达到一个很明显的效果。同时编译选项的配置也会对安装包的大小有一定影响。</p>
+<span id="more"></span>
+
+<h2 id="1-资源文件"><a href="#1-资源文件" class="headerlink" title="1. 资源文件"></a>1. 资源文件</h2><h3 id="1-删除无用图片"><a href="#1-删除无用图片" class="headerlink" title="1. 删除无用图片"></a>1. 删除无用图片</h3><p>使用开源工具 <a target="_blank" rel="noopener" href="https://github.com/tinymind/LSUnusedResources"><strong>LSUnusedResources</strong></a> 检查重复图片，但是可能会有误报，比如 <code>[@&quot;image%d&quot;, index]</code> 这种引用方式无法检查到，需要人工在核对一边。</p>
+<h3 id="2-图片文件压缩"><a href="#2-图片文件压缩" class="headerlink" title="2. 图片文件压缩"></a>2. 图片文件压缩</h3><p>使用开源工具 <a target="_blank" rel="noopener" href="https://github.com/ImageOptim/ImageOptim"><strong>imageOptim</strong></a> 对所有图片压缩一遍。此工具会使用 git 上主流的图片压缩方法尝试一遍，选择最优方案。</p>
+<h3 id="3-纯色图片使用代码生成"><a href="#3-纯色图片使用代码生成" class="headerlink" title="3. 纯色图片使用代码生成"></a>3. 纯色图片使用代码生成</h3><p>如果项目中纯色的图片比较多，可以考虑使用代码替代，生成后缓存到本地以供后期使用。</p>
+<h3 id="4-不常用图片后台下发"><a href="#4-不常用图片后台下发" class="headerlink" title="4. 不常用图片后台下发"></a>4. 不常用图片后台下发</h3><p>对于项目中不常用的图片可以考虑由后台下发，但是此项收益可能不高，而且会影响使用体验，酌情使用。</p>
+<h3 id="5-字体文件"><a href="#5-字体文件" class="headerlink" title="5. 字体文件"></a>5. 字体文件</h3><p>字体文件一般都很大，如果项目中使用了多种字体文件，可以删掉不常用的字体文件。</p>
+<h2 id="2-代码"><a href="#2-代码" class="headerlink" title="2. 代码"></a>2. 代码</h2><h3 id="1-删除不使用的类"><a href="#1-删除不使用的类" class="headerlink" title="1. 删除不使用的类"></a>1. 删除不使用的类</h3><p>项目迭代很久后，会有很多历史遗留的代码，已经不会再调用到，可以使用开源工具 <a target="_blank" rel="noopener" href="https://github.com/netyouli/WHC_Scan"><strong>WHC_Scan</strong></a> 检查没有使用的类，但是可能会有误报，而且 OC 语言的特性导致需要人工 check 一遍。</p>
+<h3 id="2-删除不使用的方法"><a href="#2-删除不使用的方法" class="headerlink" title="2. 删除不使用的方法"></a>2. 删除不使用的方法</h3><p>方法和类不在一个数量级，所以检查起来比较耗时，而且一样会有误报，如果人工核实一遍的话耗时不说收益也偏少。</p>
+<h3 id="3-精简库文件"><a href="#3-精简库文件" class="headerlink" title="3. 精简库文件"></a>3. 精简库文件</h3><p>在编译选项中选择生成 LinkMap 文件，编译完成后会在对应目录下生成 LinkMap 文件。分析 LinkMap 文件可以知道每个库文件的大小。</p>
+<p>分析工具可以使用 <a target="_blank" rel="noopener" href="https://github.com/huanxsd/LinkMap"><strong>LinkMap</strong></a> ，效果如下图：</p>
+<p><img src="https://raw.githubusercontent.com/huanxsd/LinkMap/master/ScreenShot2.png"></p>
+<p><strong>1. 检查删除没有使用的库文件。</strong></p>
+<p><strong>2. 对于过于庞大的库，检查下是否使用到了库中的所有功能，避免为了使用一小部分功能而引用了整个库。</strong></p>
+<p><strong>3. 检查重复的库文件，删除多余的库。</strong></p>
+<h3 id="4-删除无用功能代码"><a href="#4-删除无用功能代码" class="headerlink" title="4. 删除无用功能代码"></a>4. 删除无用功能代码</h3><p><strong>1. 对于一次性 / 活动需求，确认不会再使用后及时清理掉。</strong></p>
+<p><strong>2. 过时的功能，旧的 UI 样式，确实不再使用及时清理。</strong></p>
+<h2 id="3-编译选项"><a href="#3-编译选项" class="headerlink" title="3. 编译选项"></a>3. 编译选项</h2><h3 id="1-去掉符号信息"><a href="#1-去掉符号信息" class="headerlink" title="1. 去掉符号信息"></a>1. 去掉符号信息</h3><p>在 Release 版本把 Strip Debug Symbols During Copy 和 Symbols Hidden by Default 设为 YES，可以去除不必要的调试符号。</p>
+<p>Symbols Hidden by Default 会把所有符号都定义成 ”private extern”。  </p>
+<p>去掉符号信息会让安装包大小减少很多，但是代价是在 APP 里打印堆栈信息无法还原出对应的类名和方法名。</p>
+<h3 id="2-编译选项优化"><a href="#2-编译选项优化" class="headerlink" title="2. 编译选项优化"></a>2. 编译选项优化</h3><p>Release 版本的 Optimization Level 应该设置为 Fastest, Smalllest。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/iOS/" rel="tag"># iOS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/05/17/CocoaPods-%E5%88%9B%E5%BB%BA%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93/" rel="prev" title="CocoaPods-创建私有仓库">
+      <i class="fa fa-chevron-left"></i> CocoaPods-创建私有仓库
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/09/17/iOS-NSCache/" rel="next" title="iOS-NSCache">
+      iOS-NSCache <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E6%96%87%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">1. 资源文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%88%A0%E9%99%A4%E6%97%A0%E7%94%A8%E5%9B%BE%E7%89%87"><span class="nav-number">1.1.</span> <span class="nav-text">1. 删除无用图片</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%9B%BE%E7%89%87%E6%96%87%E4%BB%B6%E5%8E%8B%E7%BC%A9"><span class="nav-number">1.2.</span> <span class="nav-text">2. 图片文件压缩</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%BA%AF%E8%89%B2%E5%9B%BE%E7%89%87%E4%BD%BF%E7%94%A8%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90"><span class="nav-number">1.3.</span> <span class="nav-text">3. 纯色图片使用代码生成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E4%B8%8D%E5%B8%B8%E7%94%A8%E5%9B%BE%E7%89%87%E5%90%8E%E5%8F%B0%E4%B8%8B%E5%8F%91"><span class="nav-number">1.4.</span> <span class="nav-text">4. 不常用图片后台下发</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%AD%97%E4%BD%93%E6%96%87%E4%BB%B6"><span class="nav-number">1.5.</span> <span class="nav-text">5. 字体文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">2. 代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%88%A0%E9%99%A4%E4%B8%8D%E4%BD%BF%E7%94%A8%E7%9A%84%E7%B1%BB"><span class="nav-number">2.1.</span> <span class="nav-text">1. 删除不使用的类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%A0%E9%99%A4%E4%B8%8D%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">2. 删除不使用的方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%B2%BE%E7%AE%80%E5%BA%93%E6%96%87%E4%BB%B6"><span class="nav-number">2.3.</span> <span class="nav-text">3. 精简库文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E6%97%A0%E7%94%A8%E5%8A%9F%E8%83%BD%E4%BB%A3%E7%A0%81"><span class="nav-number">2.4.</span> <span class="nav-text">4. 删除无用功能代码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9"><span class="nav-number">3.</span> <span class="nav-text">3. 编译选项</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8E%BB%E6%8E%89%E7%AC%A6%E5%8F%B7%E4%BF%A1%E6%81%AF"><span class="nav-number">3.1.</span> <span class="nav-text">1. 去掉符号信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%BC%96%E8%AF%91%E9%80%89%E9%A1%B9%E4%BC%98%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">2. 编译选项优化</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Renhua Chi"
+      src="https://raw.githubusercontent.com/ChiRenhua/Resource/master/WebImage/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Renhua Chi</p>
+  <div class="site-description" itemprop="description">求知若渴，虚心若愚</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ChiRenhua" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ChiRenhua" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/crh944015688@163.com" title="E-Mail → crh944015688@163.com"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Renhua Chi</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '17815167175c0f1b9432',
+      clientSecret: '0631cc8f27051d93cd0dde7da18062d403e0a689',
+      repo        : 'chirenhua.github.io',
+      owner       : 'ChiRenhua',
+      admin       : ['ChiRenhua'],
+      id          : 'c72541ebc4fd7911b97eb0fde7147671',
+        language: '',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
