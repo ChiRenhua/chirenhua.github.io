@@ -13,7 +13,6 @@ before_install:
 # S: Build Lifecycle
 install:
   - npm i
-  - npm i hexo-deployer-git --save
 
 before_script:
  # - npm install -g gulp
